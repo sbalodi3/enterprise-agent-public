@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.2-rc.2/podman-model-opt-in/guide.md
+/:
+  en: fb7af38f828067b2
+  zh: 2792ee1931be6b4f
+/select-a-model-for-the-single-podman-app:
+  en: 36d59e3481bad552
+  zh: 8889ace65b33e42b
+/select-a-model-for-the-single-podman-app/change:
+  en: e0232ea78cb0b98a
+  zh: 68404b98ab240166
+/select-a-model-for-the-single-podman-app/migration:
+  en: 83a9257d259d5157
+  zh: 660f03648e07c5f6

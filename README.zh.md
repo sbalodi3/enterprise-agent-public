@@ -10,7 +10,7 @@ DeepSeek Harness（`dsh`）是由 [DeepSeek AI](https://deepseek.com) 开发的�
 
 ## Enterprise Agent
 
-使用 `npm run app:up` 在一个无根 Podman 项目中运行理赔、财务和法务 Workbench 及共享 Chat。初次安装、模拟登录、Outlook 和本地模型的配置见[部署指南](claims/deploy/README.zh.md)。
+使用 `npm run app:up` 在一个无根 Podman 项目中运行理赔、财务和法务 Workbench 及共享 Chat。初次安装、模拟登录、Outlook、Azure OpenAI 和可选本地模型的配置见[部署指南](claims/deploy/README.zh.md)。
 
 ## 开发者预览
 

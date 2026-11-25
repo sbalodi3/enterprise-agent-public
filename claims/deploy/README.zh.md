@@ -12,12 +12,32 @@
 | Sam Patel | 财务账单异常、发票来源和须审核的操作 | 选择 FIN-207，询问差额原因 |
 | Morgan Ellis | 法务事项、来源时间线和须审核的操作 | 选择 MAT-017，询问哪些日期冲突 |
 
-1. 全新安装包含本地模拟工资证明服务。测试签名 A2A 交互时，通过 `SHOWCASE_A2A_SOURCE` 指定[匹配的源码检出](../showcase/partner/README.zh.md)。可用 `SHOWCASE_PARTNER_MODE=fixture` 显式选择内置模拟服务。提供下文所述 GGUF 或设置 `CLAIMS_MODEL_URL` 和 `CLAIMS_MODEL_ID`，指向 Podman 可访问的本地模型。首次启动将模型设置保存到 `.artifacts/enterprise-agent/.env`。
+1. 全新安装包含本地模拟工资证明服务。测试签名 A2A 交互时，通过 `SHOWCASE_A2A_SOURCE` 指定[匹配的源码检出](../showcase/partner/README.zh.md)。可用 `SHOWCASE_PARTNER_MODE=fixture` 显式选择内置模拟服务。登录、Workbench 和 Outlook 设置无需模型。Chat 回复及模型辅助操作需要配置模型。
 2. 启动项目并登录。在财务或法务记录中选择 **Ask agent** 即可在共享输入框中继续。会话仅列出该员工的记录，引文链接指向有版本的来源。可在相同员工和范围的 **Saved Workbench answers** 中查看原抽屉中保存的回答。
 3. 在 **App connections** 中关联当前员工的模拟 Outlook 邮箱。下次登录或重启 Workbench 会沿用授权。重启模拟 Microsoft 服务会生成新的邮箱身份，需要重新授权。租户部署可在项目环境中配置现有 Microsoft 委托设置，包括员工账号映射和令牌加密密钥。配置 Microsoft 客户端后，启动器即使用这些设置。
 4. `npm run app:up -- --stop` 停止项目并保留应用数据。再次运行 `npm run app:up` 会复用已有镜像；使用 `--build` 重新构建，或用 `--cms-mcp` 加载可选数据集。
 
 运行 `node claims/shared-chat/departments.browser.mjs` 检查三个登录身份的共享输入框和访问隔离。添加 `--outlook` 可测试本地模拟服务的授权和搜索。该检查会保存回答，请使用测试身份和本地模型。
+
+### 使用 Azure OpenAI
+
+先运行一次 `npm run app:up` 以创建私有项目配置文件 `.artifacts/enterprise-agent/.env`。填写 Azure OpenAI 资源端点、支持 Chat Completions 和工具调用的模型部署名称，以及 API 密钥。三个设置均为必填项。请将密钥保存在 Git 忽略的配置文件或 Shell 环境变量中。
+
+```dotenv
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_OPENAI_DEPLOYMENT=your-deployment-name
+AZURE_OPENAI_API_KEY=your-key
+```
+
+再次运行 `npm run app:up`。Workbench 将对理赔、财务、法务及 Outlook 辅助 Chat 使用这个模型部署。各部门仍按登录员工的权限访问数据。资源端点也可包含 `/openai/v1`。[Microsoft Foundry 端点文档](https://learn.microsoft.com/en-us/azure/ai-foundry/model-inference/concepts/endpoints)
+
+### 使用本地模型
+
+- 运行 `npm run app:up -- --ollama` 启动可选的 Ollama 容器。首次安装时模型库为空。选择支持工具调用的模型，运行 `podman exec enterprise-agent-ollama-1 ollama pull MODEL_NAME`，在项目配置文件中设置 `CLAIMS_MODEL_ID=MODEL_NAME`，再运行同一启动命令。
+- 如需使用 llama.cpp，下载下文所述固定版本的 GGUF，再运行 `npm run app:up -- --model`。
+- 如需使用现有的 OpenAI 兼容服务，在项目配置文件中设置 `CLAIMS_MODEL_URL` 和 `CLAIMS_MODEL_ID`，然后运行 `npm run app:up`。请使用 Podman 可访问的地址。
+
+从本地容器切换到其他模型前，先运行 `npm run app:up -- --stop`。此命令停止两个可选的本地模型服务，并保留项目数据。若要切换到本地模型服务，请清除 Azure 设置。
 
 有关独立组件域、生产入口和可选工资证明试点的配置，请参阅[组件部署指南](widget-host.md)。
 

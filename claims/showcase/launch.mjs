@@ -3,6 +3,7 @@ import { prepareCmsSnapshot } from './cms-mcp/prepare.mjs'
 import { cmsChatServices, writeCmsChatCompose } from './cms-chat-compose.mjs'
 import { demoIssuer, upgradeIssuer, stopLegacyIssuer } from '../deploy/entra-upgrade.mjs'
 import { buildComposeImages, containerEngine, containerEnvironment } from '../deploy/container-engine.mjs'
+import { appModel } from '../runtime/model-config.mjs'
 import { execFileSync, spawnSync } from 'node:child_process'
 import { createHmac, randomBytes } from 'node:crypto'
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs'
@@ -24,7 +25,7 @@ const envFile = join(cache, '.env')
 const engine = unified ? 'podman' : containerEngine()
 if (
   [...flags].some(
-    (flag) => !['--app', '--build', '--reset', '--model', '--stop', '--prepare', '--config', '--offline', '--observe', '--cms-mcp', '--no-cms-mcp', '--shared-chat'].includes(flag),
+    (flag) => !['--app', '--build', '--reset', '--model', '--ollama', '--stop', '--prepare', '--config', '--offline', '--observe', '--cms-mcp', '--no-cms-mcp', '--shared-chat'].includes(flag),
   )
 )
   throw Error('Unknown showcase flag')
@@ -33,6 +34,7 @@ mkdirSync(cache, { recursive: true, mode: 0o700 })
 const cmsMarker = join(cache, 'cms-mcp.enabled')
 const cmsEnabled = flags.has('--cms-mcp') || (!flags.has('--no-cms-mcp') && existsSync(cmsMarker))
 const shutdown = flags.has('--reset') || flags.has('--stop')
+if (!unified && flags.has('--ollama')) throw Error('Use npm run app:up -- --ollama to start Ollama.')
 function persistDatasetMode() {
   if (cmsEnabled) writeFileSync(cmsMarker, '1\n', { mode: 0o600 })
   else rmSync(cmsMarker, { force: true })
@@ -110,6 +112,11 @@ const compose = [
   'story',
 ]
 const storedSettings = parseEnv(settings)
+if (unified && !shutdown) {
+  const model = appModel({ ...storedSettings, ...process.env }, flags)
+  Object.assign(env, model.environment)
+  if (model.profile) compose.push('--profile', model.profile)
+}
 const partnerSource = resolve(process.env.SHOWCASE_A2A_SOURCE || storedSettings.SHOWCASE_A2A_SOURCE ||
   join(homedir(), 'Documents/A2A/dev_a2a_aws'))
 const partnerMode = process.env.SHOWCASE_PARTNER_MODE || storedSettings.SHOWCASE_PARTNER_MODE
@@ -144,11 +151,11 @@ const routerStaged = ['model.onnx', 'tokenizer.json', 'manifest.json'].every(nam
 if (routerStaged || flags.has('--reset') || flags.has('--stop')) compose.push('--profile', 'scope-model')
 if (flags.has('--observe') || flags.has('--stop') || flags.has('--reset')) compose.push('--profile', 'observe')
 if (flags.has('--observe')) env.CLAIMS_OTLP_ENDPOINT = 'http://collector:4318'
-if (flags.has('--model') || (unified && !process.env.CLAIMS_MODEL_URL && !storedSettings.CLAIMS_MODEL_URL)) compose.push('--profile', 'model')
-if (flags.has('--reset') || flags.has('--stop')) {
+if (!unified && flags.has('--model') && !shutdown) compose.push('--profile', 'model')
+if (shutdown) {
   run(
     engine,
-    [...compose, '--profile', 'model', 'down', ...(flags.has('--reset') ? ['--volumes'] : [])],
+    [...compose, '--profile', 'model', '--profile', 'ollama', 'down', ...(flags.has('--reset') ? ['--volumes'] : [])],
     env,
   )
   process.exit(0)

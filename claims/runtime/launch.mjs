@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { resolveContainerAddress } from './bind-address.mjs'
+import { inferenceProvider } from './model-config.mjs'
 import { spawn } from 'node:child_process'
 import { createInterface } from 'node:readline'
 import { MANAGED_CHAT_PORTS } from '../desktop-chat/modes.mjs'
@@ -32,22 +33,9 @@ async function link(name, target) {
   }
 }
 const bundles = worker ? [] : ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app']
-const localProvider = {
-  api: 'openai-completions',
-  baseURL: process.env.CLAIMS_MODEL_URL || (desktop ? 'http://127.0.0.1:3082/v1' : 'http://model:8080/v1'),
-  apiKeyEnv: 'CLAIMS_LOCAL_MODEL_KEY',
-  models: [
-    {
-      id: process.env.CLAIMS_MODEL_ID || 'claims-local',
-      name: 'Local claims assistant',
-      contextWindow: 8192,
-      maxTokens: 1024,
-    },
-  ],
-  retryPolicy: { mode: 'normal', maxRetries: 0 },
-}
-const personalProviders = !worker && !desktop && process.env.CLAIMS_SHARED_CHAT === '1'
-  ? await (await import('../shared-chat/model-profiles.mjs')).personalModelProviders(home,directory(process.env.CLAIMS_SHOWCASE === '1'),localProvider)
+const chatProvider = inferenceProvider(process.env, desktop)
+const personalProviders = chatProvider && !worker && !desktop && process.env.CLAIMS_SHARED_CHAT === '1'
+  ? await (await import('../shared-chat/model-profiles.mjs')).personalModelProviders(home,directory(process.env.CLAIMS_SHOWCASE === '1'),chatProvider)
   : {}
 const sharedWebRows = [
   { id: 'ui-brand-official', disabled: true },
@@ -71,7 +59,7 @@ const sharedWebRows = [
     id: 'llm-pi-ai',
     config: {
       providers: {
-        'claims-local': localProvider,
+        ...(chatProvider && { 'claims-local': chatProvider }),
         ...personalProviders,
       },
     },

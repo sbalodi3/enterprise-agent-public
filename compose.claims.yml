@@ -128,6 +128,8 @@ services:
       OTEL_SERVICE_NAME: claims-workbench
       CLAIMS_MODEL_URL: ${CLAIMS_MODEL_URL:-http://llama:8080/v1}
       CLAIMS_MODEL_ID: ${CLAIMS_MODEL_ID:-claims-local}
+      CLAIMS_MODEL_DISABLED: ${CLAIMS_MODEL_DISABLED:-0}
+      CLAIMS_AZURE_OPENAI_API_KEY: ${CLAIMS_AZURE_OPENAI_API_KEY:-}
     volumes: [claims-harness:/data]
     ports: ['127.0.0.1:3080:3080', '127.0.0.1:4380:3098']
     depends_on:
@@ -247,6 +249,13 @@ services:
       - ${CLAIMS_MODELS_DIR:-./claims/deploy/models}:/models:ro,z
     networks: [claims, chat]
 
+  ollama:
+    profiles: [ollama]
+    image: docker.io/ollama/ollama:0.40.18@sha256:1cabd20e1762a7a8444bf4a7110b346d923cd77ab6c97c984434140638c913ec
+    restart: unless-stopped
+    volumes: [claims-ollama:/root/.ollama]
+    networks: [claims]
+
 networks:
   claims:
   chat:
@@ -260,3 +269,4 @@ volumes:
   claims-chat-maya:
   claims-chat-alex:
   claims-chat-supervisor:
+  claims-ollama:

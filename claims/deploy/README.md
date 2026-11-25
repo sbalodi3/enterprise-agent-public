@@ -12,12 +12,32 @@ Run `npm run app:up` from the repository root with Node 24, a running rootless P
 | Sam Patel | Finance billing exceptions, invoice sources and reviewed Finance actions | Select FIN-207 and ask what explains the variance |
 | Morgan Ellis | Legal matters, source chronology and reviewed Legal actions | Select MAT-017 and ask which dates conflict |
 
-1. A fresh install includes a local synthetic wage partner. To exercise the signed A2A exchange, set `SHOWCASE_A2A_SOURCE` to the [matching source checkout](../showcase/partner/README.md). `SHOWCASE_PARTNER_MODE=fixture` explicitly selects the bundled fixture. Supply the reference GGUF described below or configure `CLAIMS_MODEL_URL` and `CLAIMS_MODEL_ID` for a local model reachable from Podman. The first launch saves those model settings in `.artifacts/enterprise-agent/.env`.
+1. A fresh install includes a local synthetic wage partner. To exercise the signed A2A exchange, set `SHOWCASE_A2A_SOURCE` to the [matching source checkout](../showcase/partner/README.md). `SHOWCASE_PARTNER_MODE=fixture` explicitly selects the bundled fixture. Sign-in, Workbench and Outlook setup are available without a model. Configure a model to use Chat replies and model-assisted actions.
 2. Start the project and sign in. **Ask agent** from a Finance or Legal Workbench record opens that record in the shared composer. Each department conversation lists only the employee’s records. Citations open versioned sources. Existing drawer answers are under **Saved Workbench answers** for the same employee and scope.
 3. Choose **App connections** and connect the signed-in employee’s synthetic Outlook account. The existing grant is reused on subsequent sign-ins and Workbench restarts. Restarting the synthetic Microsoft provider generates new mailbox identities and requires fresh consent. For a tenant deployment, configure the existing delegated Microsoft settings in the project environment, including the employee-to-account map and token encryption key. The launcher uses those settings when a Microsoft client is configured.
 4. `npm run app:up -- --stop` stops the project and retains application data. `npm run app:up` reuses available images. Use `--build` to rebuild or `--cms-mcp` to include the optional imported portfolio.
 
 Run `node claims/shared-chat/departments.browser.mjs` for the three-login composer and authorization check. Add `--outlook` to exercise delegated consent and search against the local synthetic provider. Use test identities and a local model for this check, which saves answers.
+
+### Use Azure OpenAI
+
+Run `npm run app:up` once to create the private project settings file, `.artifacts/enterprise-agent/.env`. Add your Azure OpenAI resource endpoint, the name of a deployed model that supports Chat Completions and tool calls, and the API key. All three settings are required. Keep the key in that Git-ignored file or in your shell environment.
+
+```dotenv
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_OPENAI_DEPLOYMENT=your-deployment-name
+AZURE_OPENAI_API_KEY=your-key
+```
+
+Run `npm run app:up` again. Workbench uses this deployment for Claims, Finance and Legal Chat and Outlook-assisted Chat. Department access still follows the signed-in employee. The resource endpoint can also include `/openai/v1`. [Microsoft Foundry endpoint documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/model-inference/concepts/endpoints)
+
+### Use a local model
+
+- To start the optional Ollama container, run `npm run app:up -- --ollama`. It starts with an empty model library on a fresh install. Choose a tool-capable model and run `podman exec enterprise-agent-ollama-1 ollama pull MODEL_NAME`. Set `CLAIMS_MODEL_ID=MODEL_NAME` in the project settings file and rerun the same launch command.
+- To use llama.cpp, download the pinned GGUF described below and run `npm run app:up -- --model`.
+- To use an existing OpenAI-compatible server, set `CLAIMS_MODEL_URL` and `CLAIMS_MODEL_ID` in the project settings file and run `npm run app:up`. Use an address reachable from Podman.
+
+When switching away from a local container, run `npm run app:up -- --stop` first. It stops both optional local model services and retains the project data. Clear the Azure settings if you want to use a local provider.
 
 Configure the separate widget origin, production ingress and optional wage-evidence pilot using the [widget deployment guide](widget-host.md).
 

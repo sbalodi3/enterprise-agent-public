@@ -6,8 +6,14 @@
   en: c9f5e71c025f57f8
   zh: 2d29d163f94d2632
 /local-claims-demo-deployment/single-podman-application:
-  en: 08c604a618d8d61e
-  zh: 4d4b1e0a85ac92cf
+  en: 1c67cc82c7539b6c
+  zh: 74a7203f4948d4e3
+/local-claims-demo-deployment/single-podman-application/use-azure-openai:
+  en: abcbbd49ddea32dd
+  zh: 21610774c3790a12
+/local-claims-demo-deployment/single-podman-application/use-a-local-model:
+  en: 09a51f4a05dec488
+  zh: 63c62bedde913ca8
 /local-claims-demo-deployment/optional-web-search-for-standard-chat:
   en: 52829ba66ceccc6f
   zh: 8935d10057b7eac6

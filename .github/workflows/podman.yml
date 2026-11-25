@@ -41,7 +41,7 @@ jobs:
       - name: Test network selection and hosted Chat relay
         run: |
           cmp .containerignore claims/deploy/Dockerfile.dockerignore
-          node --test claims/tests/bind-address.test.mjs claims/tests/desktop-chat-authority.test.mjs
+          node --test claims/tests/bind-address.test.mjs claims/tests/desktop-chat-authority.test.mjs claims/tests/model-config.test.mjs
       - name: Check concurrent private workspaces on rootless Podman
         run: |
           podman build -t localhost/claims-workspace:test -f claims/shared-chat/Dockerfile.workspace claims/shared-chat
@@ -52,6 +52,7 @@ jobs:
         run: |
           node claims/deploy/up.mjs --showcase --cms-mcp --observe --model --config
           npm run app:up -- --config
+          npm run app:up -- --ollama --config
       - name: Build and start the claims demo with Podman
         env:
           DOCKER_HOST: unix:///unused-docker-socket
@@ -84,29 +85,32 @@ jobs:
           CLAIMS_TEST_COMMAND=1 node claims/shared-chat/isolation.browser.mjs
           test "$(podman ps -q --filter label=org.enterprise-agent.workspace=claims-demo | wc -l)" -eq 2
           podman rm -f chat-model-fixture
-      - name: Verify the three department profiles on one Podman origin
+      - name: Start the single Podman application without a model
         env:
-          SHOWCASE_APP_PORT: '3280'
-          SHOWCASE_ISSUER_PORT: '8280'
-          SHOWCASE_WIDGET_PORT: '4481'
-          CLAIMS_TEMPORAL_ENABLED: 'false'
-          SHOWCASE_PARTNER_CONTEXT: ./claims/showcase/partner
+          SHOWCASE_PARTNER_MODE: fixture
+        run: |
+          npm run app:up
+          curl --fail --silent --show-error http://127.0.0.1:3280/health/ready
+          for service in llama ollama; do
+            test -z "$(podman ps -aq --filter label=com.docker.compose.project=enterprise-agent --filter label=com.docker.compose.service="$service")"
+          done
+      - name: Verify the three department profiles on the same Podman origin
+        env:
+          SHOWCASE_PARTNER_MODE: fixture
           CLAIMS_MODEL_URL: http://department-model:43813/v1
         run: |
-          files=(-p enterprise-agent --env-file .artifacts/enterprise-agent/.env -f compose.claims.yml -f claims/showcase/compose.yml -f .artifacts/enterprise-agent/shared-chat.compose.json -f claims/deploy/outlook.compose.yml)
-          podman build --ignorefile claims/deploy/Dockerfile.outlook.dockerignore -f claims/deploy/Dockerfile.outlook -t localhost/enterprise-agent-outlook:v1 claims
-          podman compose "${files[@]}" up --no-build -d --wait workbench kong
           podman run --detach --name department-model --network enterprise-agent_claims --env HOST=0.0.0.0 \
             --volume "$PWD/claims/shared-chat/fixture-model.mjs:/model.mjs:ro,z" --entrypoint node localhost/claims-workspace:v1 /model.mjs
+          npm run app:up
           CLAIMS_TEST_PLAYWRIGHT="$RUNNER_TEMP/chat-browser/node_modules/playwright" CLAIMS_BROWSER_CHANNEL=chromium node claims/shared-chat/departments.browser.mjs
       - name: Tear down the department test project
         if: always()
         env:
-          SHOWCASE_PARTNER_CONTEXT: ./claims/showcase/partner
+          SHOWCASE_PARTNER_MODE: fixture
         run: |
+          podman rm -f --ignore department-model
           if test -f .artifacts/enterprise-agent/shared-chat.compose.json; then
-            podman rm -f --ignore department-model
-            podman compose -p enterprise-agent --env-file .artifacts/enterprise-agent/.env -f compose.claims.yml -f claims/showcase/compose.yml -f .artifacts/enterprise-agent/shared-chat.compose.json -f claims/deploy/outlook.compose.yml down --volumes
+            npm run app:up -- --reset
           fi
       - name: Rehearse employee data migration and rollback
         run: |

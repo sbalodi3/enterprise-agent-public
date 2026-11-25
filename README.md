@@ -10,7 +10,7 @@ Documentation: [https://deepseek-harness.github.io/deepseek-harness/](https://de
 
 ## Enterprise Agent
 
-Run the Claims, Finance and Legal Workbench and shared Chat in one rootless Podman project with `npm run app:up`. The [deployment guide](claims/deploy/README.md) covers first-time setup, synthetic sign-in, Outlook and the local model.
+Run the Claims, Finance and Legal Workbench and shared Chat in one rootless Podman project with `npm run app:up`. The [deployment guide](claims/deploy/README.md) covers first-time setup, synthetic sign-in, Outlook, Azure OpenAI and optional local models.
 
 ## Developer preview
 
