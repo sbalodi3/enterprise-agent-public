@@ -1,0 +1,43 @@
+_format_version: '3.0'
+services:
+  - name: claims-widget-sandbox
+    url: http://workbench:3098
+    routes:
+      - name: claims-widget-host
+        hosts: [claims-widgets.localhost]
+        paths: [/]
+        strip_path: false
+        preserve_host: true
+  # A mailbox turn can wait up to 135 seconds for the shared local model.
+  - name: outlook-mail-chat
+    url: http://workbench:3080
+    read_timeout: 145000
+    retries: 0
+    routes:
+      - name: employee-mail-turn
+        hosts: [127.0.0.1]
+        paths: [/claims/api/mail-chat/]
+        strip_path: false
+        preserve_host: true
+  - name: enterprise-agent
+    url: http://workbench:3080
+    routes:
+      - name: claim-chat-activity
+        hosts: [127.0.0.1]
+        paths: [/claims/api/chat/events/]
+        strip_path: false
+        preserve_host: true
+        response_buffering: false
+      - name: employee-app
+        hosts: [127.0.0.1]
+        paths: [/]
+        strip_path: false
+        preserve_host: true
+      - name: private-interfaces
+        paths: [/api/internal, /claims/integrations, /auth/backchannel-logout]
+        strip_path: false
+        plugins:
+          - name: request-termination
+            config:
+              status_code: 404
+              message: Not found

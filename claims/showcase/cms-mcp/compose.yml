@@ -1,0 +1,15 @@
+# Used only when the launcher enables the CMS-MCP dataset.
+services:
+  juris:
+    environment:
+      CLAIMS_CMS_MCP: '1'
+    volumes:
+      - ${SHOWCASE_CMS_SNAPSHOT:-./.artifacts/claims-showcase/cms-mcp/snapshot.json}:/run/cms-mcp/snapshot.json:ro,z
+  workbench:
+    environment:
+      CLAIMS_CMS_MCP: '1'
+    volumes:
+      - ${SHOWCASE_CMS_SNAPSHOT:-./.artifacts/claims-showcase/cms-mcp/snapshot.json}:/run/cms-mcp/snapshot.json:ro,z
+  entra:
+    environment:
+      CLAIMS_CMS_MCP: '1'

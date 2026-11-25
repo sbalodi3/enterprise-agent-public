@@ -1,0 +1,17 @@
+{
+  "name": "claims-demo-worker",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.9.0" },
+  "scripts": {
+    "test": "node --test tests/activities.test.mjs",
+    "test:integration": "node --test tests/recovery.test.mjs"
+  },
+  "dependencies": {
+    "@temporalio/activity": "1.24.0",
+    "@temporalio/client": "1.24.0",
+    "@temporalio/common": "1.24.0",
+    "@temporalio/worker": "1.24.0",
+    "@temporalio/workflow": "1.24.0"
+  }
+}

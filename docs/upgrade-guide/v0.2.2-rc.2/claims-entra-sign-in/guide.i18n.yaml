@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.2-rc.2/claims-entra-sign-in/guide.md
+/:
+  en: 2e26a10f74cf1ede
+  zh: bd76295fd14e3f97
+/sign-in-to-the-claims-workbench-with-entra-local:
+  en: 093229fbf87f6e90
+  zh: 2da7c79f3f6361b7
+/sign-in-to-the-claims-workbench-with-entra-local/change:
+  en: c6c5e7ddadaef00c
+  zh: 0b566f16c4c2baed
+/sign-in-to-the-claims-workbench-with-entra-local/migration:
+  en: 4148946c33a3427e
+  zh: 432478e1cca4f836

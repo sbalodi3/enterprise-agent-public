@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write claims/showcase/README.md
+/connected-claims-showcase:
+  en: 0ec3c80cbce16710
+  zh: f439b0c40094a143
+/connected-claims-showcase/start-locally:
+  en: 2c53d725744518b7
+  zh: 113d927c31e808e3
+/connected-claims-showcase/explore-cms-mcp-claims:
+  en: 3df8841761e2787f
+  zh: 7c4589b2cd286f7b
+/connected-claims-showcase/act-on-a-cms-claim:
+  en: ebf7dee4607944d3
+  zh: 878b31df2e3c65ac
+/connected-claims-showcase/present-legal-matters-and-finance-billing-review:
+  en: 4dad0d42edbca0c3
+  zh: c051ca8c3b325db5
+/connected-claims-showcase/present-the-two-claims-workflows:
+  en: 71e5a3c864e10499
+  zh: 38282d3953e2dd52
+/connected-claims-showcase/present-the-two-claims-workflows/1-request-missing-wage-evidence:
+  en: 8325c2c0c0bc9216
+  zh: 03312133ee8fbbc6
+/connected-claims-showcase/present-the-two-claims-workflows/2-file-a-missed-call-on-the-correct-claim:
+  en: 77870ca6504b8478
+  zh: 07dea7433ad034de
+/connected-claims-showcase/use-the-claims-agent-from-either-page:
+  en: 26c198d2dc927837
+  zh: 473f1ce6b9a6a88e
+/connected-claims-showcase/what-runs:
+  en: e2f721d4387d3e19
+  zh: 3b0888eef4368b88
+/connected-claims-showcase/repeat-or-verify:
+  en: 9ca65d5bd8ae0c47
+  zh: 32660ec561994546

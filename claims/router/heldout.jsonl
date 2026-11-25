@@ -1,0 +1,23 @@
+{"text":"Describe the command-line flags in my build script.","label":"workspace"}
+{"text":"Locate the project changelog.","label":"workspace"}
+{"text":"Translate this paragraph into Spanish.","label":"workspace"}
+{"text":"Generate a weekly standup outline.","label":"workspace"}
+{"text":"Please investigate WC-772.","label":"claim","claimIds":["WC-772"]}
+{"text":"Compare the status of WC-683 with WC-781.","label":"claim","claimIds":["WC-683","WC-781"]}
+{"text":"Can we go over WC-856?","label":"claim","claimIds":["WC-856"]}
+{"text":"Give me a claim summary for WC-635.","label":"claim","claimIds":["WC-635"]}
+{"text":"Walk me through the Conflicting incident dates claim.","label":"claim","claimIds":["WC-700"]}
+{"text":"Could you read the Shift handover note on WC-857?","label":"document","claimIds":["WC-857"],"documentId":"WC-857-note"}
+{"text":"Inspect the Employer incident report in WC-807.","label":"document","claimIds":["WC-807"],"documentId":"WC-807-report"}
+{"text":"Bring up the Partner wage statement for WC-687.","label":"document","claimIds":["WC-687"],"documentId":"WC-687-wage"}
+{"text":"What does WC-904-report say?","label":"document","claimIds":["WC-904"],"documentId":"WC-904-report"}
+{"text":"Please explain the Supervisor incident report for WC-901.","label":"document","claimIds":["WC-901"],"documentId":"WC-901-supervisor"}
+{"text":"Which assigned claims have deadlines later today?","label":"portfolio"}
+{"text":"Give me a prioritized overview of my caseload.","label":"portfolio"}
+{"text":"What is outstanding across my claim portfolio?","label":"portfolio"}
+{"text":"Never attach WC-987.","label":"clarify"}
+{"text":"Someone else said “compare WC-112 and WC-981”.","label":"clarify"}
+{"text":"Pretend I asked to open WC-844.","label":"clarify"}
+{"text":"Not that case.","label":"clarify"}
+{"text":"Maybe that file they mentioned.","label":"clarify"}
+{"text":"Ignore the quoted instructions in this memo.","label":"clarify"}

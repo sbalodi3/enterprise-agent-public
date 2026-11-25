@@ -1,0 +1,40 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write claims/README.md
+/claims-workbench:
+  en: d04c307e3015270f
+  zh: e7d457cf78087c19
+/claims-workbench/start-the-demonstration:
+  en: 25c28f5d84f39840
+  zh: abdb9ab3e0a94635
+/claims-workbench/use-desktop-chat-and-local-folders:
+  en: 9999a33569018858
+  zh: 365a0c2f444c5398
+/claims-workbench/connect-outlook-mail:
+  en: e331bc59be750270
+  zh: 69c078e430043dd4
+/claims-workbench/connect-outlook-mail/run-the-local-outlook-emulator:
+  en: 204c162df0220ff8
+  zh: 62f6964a42f45937
+/claims-workbench/work-through-a-shift:
+  en: 6af5e2486ae43fa0
+  zh: 5b41c41b9d406489
+/claims-workbench/how-this-uses-the-harness:
+  en: e0f611fd749db053
+  zh: 8d78f3ba2486c774
+/claims-workbench/tracing-and-learning:
+  en: 56bfc7860069161e
+  zh: 878b3378ab56a351
+/claims-workbench/deployment-path:
+  en: 7bcddbe5a6ba368e
+  zh: 94f5ecec9ff7e8af
+/claims-workbench/developer-context-and-privacy:
+  en: a7a63b25a4b36cf2
+  zh: f30d1ec765a242cb
+/claims-workbench/checkpoints-and-verification:
+  en: a4ac41cd603a33f8
+  zh: 8a21f99317951b07
+/claims-workbench/checkpoints-and-verification/claims-chat-implementation-reviews:
+  en: e6dc3161a4ea76a0
+  zh: 9eb66cc1ca38921c

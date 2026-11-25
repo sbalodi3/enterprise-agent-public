@@ -1,0 +1,44 @@
+[
+  {
+    "id": "opening",
+    "label": "Intake agent",
+    "text": "This is the claims intake desk. Please give your name and tell me which incident you are calling about.",
+    "startSeconds": 0.0,
+    "endSeconds": 5.801
+  },
+  {
+    "id": "worksite",
+    "label": "Caller",
+    "text": "I work at Willow Harbor Supply. My incident was at Cedar Dock, loading bay three. The report number ends in 42.",
+    "startSeconds": 6.135,
+    "endSeconds": 14.336
+  },
+  {
+    "id": "name",
+    "label": "Intake agent",
+    "text": "Thank you. Could you give me the name on the report and the date, if you remember it?",
+    "startSeconds": 14.669,
+    "endSeconds": 19.44
+  },
+  {
+    "id": "date",
+    "label": "Caller",
+    "text": "My name is River Ellis. I think it was Monday, but it might have been Tuesday. I would need to check my shift record.",
+    "startSeconds": 19.773,
+    "endSeconds": 27.496
+  },
+  {
+    "id": "callback",
+    "label": "Caller",
+    "text": "I can take a call after my shift to confirm the date. Please attach my message to the Cedar Dock report.",
+    "startSeconds": 27.829,
+    "endSeconds": 34.591
+  },
+  {
+    "id": "close",
+    "label": "Intake agent",
+    "text": "I have taken your message. An examiner will check the report details and follow up.",
+    "startSeconds": 34.924,
+    "endSeconds": 40.085
+  }
+]

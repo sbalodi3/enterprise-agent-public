@@ -1,0 +1,219 @@
+# Overlay on compose.claims.yml. The launcher always sets an isolated Compose project.
+x-mounts: &mounts
+  - ./claims/runtime:/app/deepseek-harness/claims/runtime:ro,z
+  - ./claims/connections:/app/deepseek-harness/claims/connections:ro,z
+  - ./claims/auth:/app/deepseek-harness/claims/auth:ro,z
+  - ./claims/shared-chat:/app/deepseek-harness/claims/shared-chat:ro,z
+  - ./claims/desktop-chat:/app/deepseek-harness/claims/desktop-chat:ro,z
+  - ./claims/ui:/app/deepseek-harness/claims/ui:ro,z
+  - ./claims/domain:/app/deepseek-harness/claims/domain:ro,z
+  - ./claims/portfolios:/app/deepseek-harness/claims/portfolios:ro,z
+  - ./claims/profiles:/app/deepseek-harness/claims/profiles:ro,z
+  - ./claims/showcase:/app/deepseek-harness/claims/showcase:ro,z
+  - ./claims/deploy/chat-healthcheck.mjs:/app/deepseek-harness/claims/deploy/chat-healthcheck.mjs:ro,z
+  - ./claims/deploy/healthcheck.mjs:/app/deepseek-harness/claims/deploy/healthcheck.mjs:ro,z
+x-chat: &chat
+  CLAIMS_APP_ORIGIN: http://127.0.0.1:${SHOWCASE_APP_PORT:-3180}
+  CLAIMS_CHAT_PORT_BASE: '3183'
+  CLAIMS_MODEL_URL: ${CLAIMS_MODEL_URL:-http://llama:8080/v1}
+x-partner: &partner
+  image: enterprise-agent-showcase-partner:local
+  pull_policy: never
+  build: ${SHOWCASE_PARTNER_CONTEXT:?Run the showcase launcher}
+  networks: [claims]
+  restart: unless-stopped
+  environment: &partner-env
+    SHOWCASE_CALLBACK_TOKEN: ${SHOWCASE_CALLBACK_TOKEN}
+    SHOWCASE_MOCK_CLIENT_SECRET: ${SHOWCASE_MOCK_CLIENT_SECRET}
+    AMAZON_MOCK_URL: http://amazon-mock:8091
+    PARTNER_CALLBACK_URL: http://partner-adapter:8090/a2a/notifications
+services:
+  postgres:
+    command: ['install -m 0644 /claims-init.sh /docker-entrypoint-initdb.d/10-claims.sh && install -m 0644 /showcase-init.sh /docker-entrypoint-initdb.d/20-juris.sh && exec docker-entrypoint.sh postgres']
+    environment:
+      JURIS_DB_PASSWORD: ${JURIS_DB_PASSWORD}
+    volumes:
+      - ./claims/showcase/init-juris.sh:/showcase-init.sh:ro,z
+  entra:
+    volumes:
+      - ./claims/auth/roster.mjs:/app/roster.mjs:ro,z
+      - ./claims/auth/entra/start.mjs:/app/start.mjs:ro,z
+    ports: !override ['127.0.0.1:${SHOWCASE_ISSUER_PORT:-8180}:8080']
+    environment:
+      CLAIMS_SHOWCASE: '1'
+      CLAIMS_APP_ORIGIN: http://127.0.0.1:${SHOWCASE_APP_PORT:-3180}
+      PUBLIC_ORIGIN: http://127.0.0.1:${SHOWCASE_ISSUER_PORT:-8180}
+  workbench:
+    networks:
+      claims: {}
+      scope-model: {}
+    ports: !reset []
+    environment:
+      <<: *chat
+      CLAIMS_SHOWCASE: '1'
+      CLAIMS_OIDC_ISSUER: http://127.0.0.1:${SHOWCASE_ISSUER_PORT:-8180}/db5ec091-9b12-4b56-8c34-010000000002/v2.0
+      CLAIMS_BIND_PEER: postgres
+      CLAIMS_WIDGET_ORIGIN: ${CLAIMS_WIDGET_ORIGIN:-http://claims-widgets.localhost:${SHOWCASE_WIDGET_PORT:-4381}}
+      CLAIMS_WAGE_REVIEW: ${CLAIMS_WAGE_REVIEW:-0}
+      CLAIMS_ROUTER_URL: http://scope-router:8093
+      SHOWCASE_VOICE_TOKEN: ${SHOWCASE_VOICE_TOKEN}
+      JURIS_URL: http://juris:3091
+      JURIS_SERVICE_TOKEN: ${JURIS_SERVICE_TOKEN}
+      SHOWCASE_PARTNER_URL: http://partner-adapter:8090
+      SHOWCASE_PARTNER_TOKEN: ${SHOWCASE_PARTNER_TOKEN}
+      PORTFOLIO_LEGAL_A2A_URL: http://legal-agent:3092
+      PORTFOLIO_A2A_TOKEN: ${PORTFOLIO_A2A_TOKEN}
+      PORTFOLIO_A2A_REVIEW_TOKEN: ${PORTFOLIO_A2A_REVIEW_TOKEN}
+    volumes: *mounts
+    depends_on:
+      juris: {condition: service_healthy}
+      legal-agent: {condition: service_healthy}
+  worker:
+    environment:
+      CLAIMS_SHOWCASE: '1'
+    volumes:
+      - ./claims/worker/index.mjs:/app/deepseek-harness/claims/worker/index.mjs:ro,z
+      - ./claims/worker/activities.mjs:/app/deepseek-harness/claims/worker/activities.mjs:ro,z
+      - ./claims/worker/workflows.mjs:/app/deepseek-harness/claims/worker/workflows.mjs:ro,z
+      - ./claims/runtime:/app/deepseek-harness/claims/runtime:ro,z
+  chat-maya:
+    environment:
+      <<: *chat
+      CLAIMS_DESKTOP_PORT: '3183'
+    volumes: *mounts
+    ports: !override ['127.0.0.1:3183:3183']
+  chat-authority:
+    environment:
+      CLAIMS_CHAT_UPSTREAM: http://kong:8000
+    depends_on:
+      kong: {condition: service_healthy}
+    volumes:
+      - ./claims/desktop-chat:/app/deepseek-harness/claims/desktop-chat:ro,z
+  chat-alex:
+    environment:
+      <<: *chat
+      CLAIMS_DESKTOP_PORT: '3184'
+    volumes: *mounts
+    ports: !override ['127.0.0.1:3184:3184']
+  chat-supervisor:
+    environment:
+      <<: *chat
+      CLAIMS_DESKTOP_PORT: '3185'
+    volumes: *mounts
+    ports: !override ['127.0.0.1:3185:3185']
+  temporal:
+    ports: !override ['127.0.0.1:${SHOWCASE_TEMPORAL_PORT:-8333}:8233']
+  llama:
+    ports: !reset []
+  jaeger:
+    ports: !override ['127.0.0.1:${SHOWCASE_TRACING_PORT:-17686}:16686']
+  collector:
+    ports: !reset []
+  scope-router:
+    profiles: [scope-model]
+    image: enterprise-agent-scope-router:local
+    pull_policy: never
+    build: ./claims/router
+    networks: [scope-model]
+    volumes: ['./.artifacts/claims-router/model:/model:ro,z']
+    read_only: true
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8093/health',timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  juris:
+    image: claims-workbench:local
+    pull_policy: never
+    entrypoint: [node, claims/showcase/juris/server.mjs]
+    volumes: *mounts
+    networks: [claims]
+    environment:
+      JURIS_DATABASE_URL: postgresql://mock_juris:${JURIS_DB_PASSWORD}@postgres:5432/mock_juris
+      JURIS_SERVICE_TOKEN: ${JURIS_SERVICE_TOKEN}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://localhost:3091/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 3s
+      timeout: 4s
+      retries: 30
+    depends_on:
+      postgres: {condition: service_healthy}
+  legal-agent:
+    image: claims-workbench:local
+    pull_policy: never
+    restart: unless-stopped
+    entrypoint: [node, claims/portfolios/a2a-server.mjs]
+    networks: [claims]
+    volumes:
+      - ./claims/portfolios/a2a-contract.mjs:/app/deepseek-harness/claims/portfolios/a2a-contract.mjs:ro,z
+      - ./claims/portfolios/a2a-server.mjs:/app/deepseek-harness/claims/portfolios/a2a-server.mjs:ro,z
+      - legal-agent-data:/data/harness
+    environment:
+      PORTFOLIO_A2A_TOKEN: ${PORTFOLIO_A2A_TOKEN}
+      PORTFOLIO_A2A_REVIEW_TOKEN: ${PORTFOLIO_A2A_REVIEW_TOKEN}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://localhost:3092/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 3s
+      timeout: 4s
+      retries: 30
+  voice:
+    image: claims-workbench:local
+    pull_policy: never
+    entrypoint: [node, claims/showcase/voice.mjs]
+    networks: [claims]
+    volumes: *mounts
+    environment:
+      SHOWCASE_VOICE_TOKEN: ${SHOWCASE_VOICE_TOKEN}
+  kong:
+    image: docker.io/library/kong:3.9.1@sha256:76c14b93e989f7f4418039f7f9789ca32564016211c86ac1a18022f4788e7b9c
+    environment:
+      KONG_DATABASE: 'off'
+      KONG_DECLARATIVE_CONFIG: /etc/kong/showcase.yml
+      KONG_ADMIN_LISTEN: 'off'
+      KONG_PROXY_ACCESS_LOG: 'off'
+      KONG_NGINX_WORKER_PROCESSES: '2'
+    volumes: ['./claims/showcase/kong.yml:/etc/kong/showcase.yml:ro,z']
+    ports: ['127.0.0.1:${SHOWCASE_APP_PORT:-3180}:8000', '127.0.0.1:${SHOWCASE_WIDGET_PORT:-4381}:8000']
+    networks: [claims]
+    depends_on:
+      workbench: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, kong, health]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  amazon-mock:
+    <<: *partner
+    profiles: [signed-a2a]
+    command: [uvicorn, 'mock:create_app', --factory, --host, 0.0.0.0, --port, '8091', --no-access-log]
+    environment:
+      <<: *partner-env
+      MOCK_DB: /data/mock.sqlite3
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8091/healthz',timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes: [amazon-data:/data]
+  partner-adapter:
+    <<: *partner
+    command: [uvicorn, 'adapter:create_app', --factory, --host, 0.0.0.0, --port, '8090', --no-access-log]
+    environment:
+      <<: *partner-env
+      WORKBENCH_NOTICE_URL: http://workbench:3080/claims/integrations/showcase/partner
+      SHOWCASE_PARTNER_TOKEN: ${SHOWCASE_PARTNER_TOKEN}
+      PARTNER_DB: /data/partner.sqlite3
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8090/healthz',timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes: [partner-data:/data]
+volumes:
+  partner-data:
+  amazon-data:
+  legal-agent-data:
+networks:
+  scope-model:
+    internal: true

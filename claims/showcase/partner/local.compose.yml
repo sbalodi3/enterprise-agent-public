@@ -1,0 +1,16 @@
+services:
+  partner-adapter:
+    image: claims-workbench:local
+    build: !reset null
+    entrypoint: [node, claims/showcase/partner/local.mjs]
+    command: !reset null
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://localhost:8090/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+    environment:
+      PARTNER_DB: /data/harness/synthetic-wages.sqlite3
+    volumes: !override
+      - local-partner-data:/data
+      - ./claims/showcase:/app/deepseek-harness/claims/showcase:ro,z
+      - ./claims/auth/roster.mjs:/app/deepseek-harness/claims/auth/roster.mjs:ro,z
+volumes:
+  local-partner-data:

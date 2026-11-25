@@ -1,0 +1,17 @@
+{
+  "mode": "replay",
+  "profileRelease": "1.1.0",
+  "visibleTools": [
+    "compare_evidence",
+    "explain_priority",
+    "prepare_handoff",
+    "timeline"
+  ],
+  "calledTools": [
+    "explain_priority"
+  ],
+  "text": "Promised callback due\nNext action: Review diary\nSource: Diary \u00b7 noon\nEvidence: Recorded promise [demo-source]",
+  "sourceIds": [
+    "demo-source"
+  ]
+}

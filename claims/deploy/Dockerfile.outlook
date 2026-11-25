@@ -1,0 +1,11 @@
+FROM docker.io/library/node:24.22.3-bookworm-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54
+WORKDIR /srv/claims
+COPY tests/outlook-emulator/package*.json tests/outlook-emulator/
+RUN npm --prefix tests/outlook-emulator ci --include=dev --ignore-scripts --no-audit --no-fund && npm cache clean --force
+COPY tests/outlook-emulator/lab.mjs tests/outlook-emulator/graph-fixture.mjs tests/outlook-emulator/
+COPY auth/roster.mjs auth/
+COPY showcase/cms-mcp/snapshot.mjs showcase/cms-mcp/
+COPY deploy/local-outlook.mjs deploy/
+RUN install -d -o node -g node -m 0700 /data/config
+USER node
+ENTRYPOINT ["node","deploy/local-outlook.mjs"]

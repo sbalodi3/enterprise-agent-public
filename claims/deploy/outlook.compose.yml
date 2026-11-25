@@ -1,0 +1,32 @@
+services:
+  outlook:
+    image: localhost/enterprise-agent-outlook:v1
+    pull_policy: never
+    build:
+      context: ./claims
+      dockerfile: deploy/Dockerfile.outlook
+    restart: unless-stopped
+    networks: [claims]
+    ports: ['127.0.0.1:${SHOWCASE_OUTLOOK_PORT:-8381}:8381']
+    environment:
+      CLAIMS_APP_ORIGIN: http://127.0.0.1:${SHOWCASE_APP_PORT:-3280}
+      CLAIMS_OUTLOOK_ORIGIN: http://127.0.0.1:${SHOWCASE_OUTLOOK_PORT:-8381}
+      CLAIMS_CMS_MCP: ${OUTLOOK_CMS_DATASET:-0}
+      CLAIMS_CMS_TEST_SNAPSHOT: /run/cms/snapshot.json
+    volumes:
+      - outlook-configuration:/data/config
+      - ${OUTLOOK_CMS_DIR:-./.artifacts/enterprise-agent/cms-mcp}:/run/cms:ro,z
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:8381/').then(() => require('fs').accessSync('/data/config/provider.json')).catch(()=>process.exit(1))"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  workbench:
+    depends_on:
+      outlook: {condition: service_healthy}
+    environment:
+      CLAIMS_LOCAL_OUTLOOK_CONFIG: /run/local-outlook/provider.json
+    volumes:
+      - outlook-configuration:/run/local-outlook:ro
+volumes:
+  outlook-configuration:

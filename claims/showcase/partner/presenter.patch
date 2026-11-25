@@ -1,0 +1,26 @@
+--- a/src/mocks/amazon_wage_evidence/app.py
++++ b/src/mocks/amazon_wage_evidence/app.py
+@@ -71 +71 @@
+-def create_app(base_url: str = "http://localhost:8081") -> FastAPI:
++def create_app(base_url: str = "http://localhost:8081", *, showcase=None) -> FastAPI:
+@@ -160 +160 @@
+-                {"artifactId": f"{task_id}-1", "parts": [{"kind": "data", "data": completed_artifact(scenario)}]}
++                {"artifactId": f"{task_id}-1", "parts": [{"kind": "data", "data": artifact(showcase.result_data(task_id, SYNTHETIC_DATA)) if showcase else completed_artifact(scenario)}]}
+@@ -179,0 +180,2 @@
++        if showcase and not showcase.valid_client(form):
++            return Response(status_code=401)
+@@ -194,0 +197,4 @@
++            if showcase:
++                held = showcase.find(task_id)
++                if held is not None:
++                    return signed(task(rpc_id, task_id, held["context_id"], held["state"], "FOUND"))
+@@ -214,0 +221,5 @@
++        if showcase:
++            if claim not in ("WC-102", "CLM-000020", "CLM-000002") or body.get("method") != "message/send":
++                return signed(_canonical(rpc_error(rpc_id, "request.schema_invalid")))
++            task_id = showcase.hold(body)
++            return signed(task(rpc_id, task_id, context_id, "working", "FOUND"))
+@@ -242,0 +254,3 @@
++    if showcase:
++        showcase.install(app, sign)
++

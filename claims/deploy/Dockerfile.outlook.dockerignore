@@ -1,0 +1,14 @@
+**
+!tests/
+!tests/outlook-emulator/
+!tests/outlook-emulator/package.json
+!tests/outlook-emulator/package-lock.json
+!tests/outlook-emulator/lab.mjs
+!tests/outlook-emulator/graph-fixture.mjs
+!auth/
+!auth/roster.mjs
+!showcase/
+!showcase/cms-mcp/
+!showcase/cms-mcp/snapshot.mjs
+!deploy/
+!deploy/local-outlook.mjs

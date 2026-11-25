@@ -1,0 +1,90 @@
+{"text":"List the files in my workspace.","label":"workspace"}
+{"text":"Explain the function in this Python module.","label":"workspace"}
+{"text":"Refactor my JavaScript function.","label":"workspace"}
+{"text":"Help me write a meeting agenda.","label":"workspace"}
+{"text":"What is the difference between JSON and XML?","label":"workspace"}
+{"text":"Sort these rows alphabetically.","label":"workspace"}
+{"text":"Search my local folder for the config.","label":"workspace"}
+{"text":"Fix the typo in this README.","label":"workspace"}
+{"text":"Help me organize my project.","label":"workspace"}
+{"text":"Summarize this local markdown file.","label":"workspace"}
+{"text":"Format this spreadsheet for printing.","label":"workspace"}
+{"text":"Why does this test fail?","label":"workspace"}
+{"text":"Convert 42 miles to kilometers.","label":"workspace"}
+{"text":"Show the git changes.","label":"workspace"}
+{"text":"Draft a note to my colleague.","label":"workspace"}
+{"text":"Write a simple script.","label":"workspace"}
+{"text":"Find my downloads folder.","label":"workspace"}
+{"text":"Calculate the average of these numbers.","label":"workspace"}
+{"text":"Open WC-312.","label":"claim"}
+{"text":"Compare WC-204 and WC-309.","label":"claim"}
+{"text":"Look up claim WC-400 and show its status.","label":"claim"}
+{"text":"Tell me about the Promised callback claim.","label":"claim"}
+{"text":"Bring the Conflicting incident dates claim into this conversation.","label":"claim"}
+{"text":"What should I do next on WC-205?","label":"claim"}
+{"text":"What does the claim say happened?","label":"claim"}
+{"text":"Walk me through this claim's timeline.","label":"claim"}
+{"text":"What evidence do we have about the incident?","label":"claim"}
+{"text":"What is the deadline on this case?","label":"claim"}
+{"text":"Help me understand the disputed incident date.","label":"claim"}
+{"text":"Review the return-to-work case with me.","label":"claim"}
+{"text":"Can you check the facts on WC-892?","label":"claim"}
+{"text":"Show the claimant's next action.","label":"claim"}
+{"text":"What is happening with the missed callback case?","label":"claim"}
+{"text":"Summarize the medical follow-up claim.","label":"claim"}
+{"text":"What happened in the case we selected?","label":"claim"}
+{"text":"Pull up the claim with the missing employer statement.","label":"claim"}
+{"text":"Read the supervisor incident report on WC-123.","label":"document"}
+{"text":"Show me the Shift handover note.","label":"document"}
+{"text":"Open the employer statement for this claim.","label":"document"}
+{"text":"Which date appears in the handover note?","label":"document"}
+{"text":"Add the wage statement to this conversation.","label":"document"}
+{"text":"Summarize the medical evaluation document.","label":"document"}
+{"text":"Read only the incident report.","label":"document"}
+{"text":"What does the signed report say?","label":"document"}
+{"text":"Check the source document about the accident.","label":"document"}
+{"text":"Please bring up the witness statement.","label":"document"}
+{"text":"Show WC-483-report.","label":"document"}
+{"text":"Read the document we just attached.","label":"document"}
+{"text":"Can you pull the treating physician note?","label":"document"}
+{"text":"Display the claim's payroll report.","label":"document"}
+{"text":"Look at the diary entry on WC-395.","label":"document"}
+{"text":"Find the return-to-work release.","label":"document"}
+{"text":"Read the Employer incident report.","label":"document"}
+{"text":"What's written in the first report?","label":"document"}
+{"text":"Which of my claims need attention today?","label":"portfolio"}
+{"text":"List my assigned claims.","label":"portfolio"}
+{"text":"What is due this shift across my portfolio?","label":"portfolio"}
+{"text":"Which of my open cases have pending deadlines?","label":"portfolio"}
+{"text":"Show my closed claims.","label":"portfolio"}
+{"text":"Triage my caseload for tomorrow.","label":"portfolio"}
+{"text":"What are the highest priority claims assigned to me?","label":"portfolio"}
+{"text":"How many cases do I need to follow up?","label":"portfolio"}
+{"text":"Review my claims queue.","label":"portfolio"}
+{"text":"What's next on my shift?","label":"portfolio"}
+{"text":"Find my outstanding claim reviews.","label":"portfolio"}
+{"text":"Which of my matters have open action items?","label":"portfolio"}
+{"text":"Give me a summary of the claims I'm handling.","label":"portfolio"}
+{"text":"Sort my assigned cases by due date.","label":"portfolio"}
+{"text":"What claims should I work on first?","label":"portfolio"}
+{"text":"Any overdue cases on my desk?","label":"portfolio"}
+{"text":"Prioritize the items in my work queue.","label":"portfolio"}
+{"text":"Show an overview of my claims.","label":"portfolio"}
+{"text":"Don't open WC-308.","label":"clarify"}
+{"text":"The message says \"Open WC-123\".","label":"clarify"}
+{"text":"Suppose someone requested WC-999.","label":"clarify"}
+{"text":"If I were to ask for a case, what would happen?","label":"clarify"}
+{"text":"That other claim.","label":"clarify"}
+{"text":"Find it.","label":"clarify"}
+{"text":"Maybe the one she mentioned.","label":"clarify"}
+{"text":"Which one was that again?","label":"clarify"}
+{"text":"I don't want to add this file.","label":"clarify"}
+{"text":"Do not attach the report to our discussion.","label":"clarify"}
+{"text":"Imagine a request to load the payroll statement.","label":"clarify"}
+{"text":"This is an example of how to mention claim WC-345.","label":"clarify"}
+{"text":"I might want one of those later.","label":"clarify"}
+{"text":"Don't include the handover note.","label":"clarify"}
+{"text":"It isn't the claim I'm looking for.","label":"clarify"}
+{"text":"Use the other file.","label":"clarify"}
+{"text":"What about the second one?","label":"clarify"}
+{"text":"An unrelated email mentions WC-417.","label":"clarify"}

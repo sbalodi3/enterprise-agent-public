@@ -1,0 +1,136 @@
+name: Podman
+
+on:
+  workflow_call:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: podman-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  claims:
+    name: Rootless Podman build and smoke test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CONTAINER_ENGINE: podman
+      PODMAN_COMPOSE_WARNING_LOGS: 'false'
+      DSH_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Start the rootless API
+        run: |
+          sudo systemctl start "user@$(id -u).service"
+          export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+          printf 'XDG_RUNTIME_DIR=%s\n' "$XDG_RUNTIME_DIR" >> "$GITHUB_ENV"
+          systemctl --user start podman.socket
+          test "$(podman info --format '{{.Host.Security.Rootless}}')" = true
+          podman compose version
+      - name: Test network selection and hosted Chat relay
+        run: |
+          cmp .containerignore claims/deploy/Dockerfile.dockerignore
+          node --test claims/tests/bind-address.test.mjs claims/tests/desktop-chat-authority.test.mjs
+      - name: Check concurrent private workspaces on rootless Podman
+        run: |
+          podman build -t localhost/claims-workspace:test -f claims/shared-chat/Dockerfile.workspace claims/shared-chat
+          export CLAIMS_TEST_ENGINE_SOCKET="$XDG_RUNTIME_DIR/podman/podman.sock"
+          export CLAIMS_TEST_IMAGE=localhost/claims-workspace:test
+          node --test claims/shared-chat/lifecycle.engine.test.mjs
+      - name: Validate showcase and optional service configuration
+        run: |
+          node claims/deploy/up.mjs --showcase --cms-mcp --observe --model --config
+          npm run app:up -- --config
+      - name: Build and start the claims demo with Podman
+        env:
+          DOCKER_HOST: unix:///unused-docker-socket
+          DOCKER_CONTEXT: unused-docker-context
+        run: CLAIMS_MODEL_URL=http://chat-model-fixture:43813/v1 node claims/deploy/up.mjs --story --observe --shared-chat
+      - name: Check Workbench, identity, hosted Chat and the build context
+        run: |
+          curl --fail --silent --show-error http://localhost:3080/health/ready
+          curl --fail --silent --show-error http://localhost:8080/health
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://localhost:3083/)" = 303
+          test -z "$(podman ps -q --filter label=com.docker.compose.service=chat-authority)"
+          podman run --rm --pull=never --entrypoint sh claims-workbench:local -ec '
+            test ! -e sedgwick_info
+            test ! -e claims/deploy/.env
+            test ! -e claims/AGENTS.md
+            test ! -e .artifacts
+            test ! -e /tmp/claims-pnpm-store'
+      - name: Verify employee isolation, ordinary container count, and approved tool execution
+        run: |
+          podman run --detach --name chat-model-fixture --network claims-demo_claims --network-alias chat-model-fixture \
+            --env HOST=0.0.0.0 --volume "$PWD/claims/shared-chat/fixture-model.mjs:/test-model.mjs:ro,z" \
+            --entrypoint node localhost/claims-workspace:v1 /test-model.mjs
+          npm install --prefix "$RUNNER_TEMP/chat-browser" playwright
+          "$RUNNER_TEMP/chat-browser/node_modules/.bin/playwright" install --with-deps chromium
+          export CLAIMS_TEST_PLAYWRIGHT="$RUNNER_TEMP/chat-browser/node_modules/playwright"
+          export CLAIMS_BROWSER_CHANNEL=chromium CLAIMS_TEST_ORIGIN=http://localhost:3080
+          export CLAIMS_TEST_REPLY='Fixture reply received.'
+          CLAIMS_TEST_SETTINGS=1 node claims/shared-chat/isolation.browser.mjs
+          test -z "$(podman ps -aq --filter label=org.enterprise-agent.workspace=claims-demo)"
+          CLAIMS_TEST_COMMAND=1 node claims/shared-chat/isolation.browser.mjs
+          test "$(podman ps -q --filter label=org.enterprise-agent.workspace=claims-demo | wc -l)" -eq 2
+          podman rm -f chat-model-fixture
+      - name: Verify the three department profiles on one Podman origin
+        env:
+          SHOWCASE_APP_PORT: '3280'
+          SHOWCASE_ISSUER_PORT: '8280'
+          SHOWCASE_WIDGET_PORT: '4481'
+          CLAIMS_TEMPORAL_ENABLED: 'false'
+          SHOWCASE_PARTNER_CONTEXT: ./claims/showcase/partner
+          CLAIMS_MODEL_URL: http://department-model:43813/v1
+        run: |
+          files=(-p enterprise-agent --env-file .artifacts/enterprise-agent/.env -f compose.claims.yml -f claims/showcase/compose.yml -f .artifacts/enterprise-agent/shared-chat.compose.json -f claims/deploy/outlook.compose.yml)
+          podman build --ignorefile claims/deploy/Dockerfile.outlook.dockerignore -f claims/deploy/Dockerfile.outlook -t localhost/enterprise-agent-outlook:v1 claims
+          podman compose "${files[@]}" up --no-build -d --wait workbench kong
+          podman run --detach --name department-model --network enterprise-agent_claims --env HOST=0.0.0.0 \
+            --volume "$PWD/claims/shared-chat/fixture-model.mjs:/model.mjs:ro,z" --entrypoint node localhost/claims-workspace:v1 /model.mjs
+          CLAIMS_TEST_PLAYWRIGHT="$RUNNER_TEMP/chat-browser/node_modules/playwright" CLAIMS_BROWSER_CHANNEL=chromium node claims/shared-chat/departments.browser.mjs
+      - name: Tear down the department test project
+        if: always()
+        env:
+          SHOWCASE_PARTNER_CONTEXT: ./claims/showcase/partner
+        run: |
+          if test -f .artifacts/enterprise-agent/shared-chat.compose.json; then
+            podman rm -f --ignore department-model
+            podman compose -p enterprise-agent --env-file .artifacts/enterprise-agent/.env -f compose.claims.yml -f claims/showcase/compose.yml -f .artifacts/enterprise-agent/shared-chat.compose.json -f claims/deploy/outlook.compose.yml down --volumes
+          fi
+      - name: Rehearse employee data migration and rollback
+        run: |
+          podman exec claims-demo-workbench-1 sh -ec '
+            CLAIMS_TEST_DATABASE_URL="$DATABASE_URL" node --test claims/shared-chat/migration.test.mjs claims/domain/tests/department-sessions.test.mjs'
+      - name: Build the scope classifier
+        run: podman build --layers -t enterprise-agent-scope-router:ci claims/router
+      - name: Check the Standard Chat search services
+        run: |
+          export SEARXNG_SECRET="$(openssl rand -hex 32)"
+          podman compose -f claims/deploy/searxng/compose.yml up -d
+          curl --retry 12 --retry-all-errors --retry-delay 2 --fail --silent --show-error http://localhost:3487/healthz
+          podman compose -f claims/deploy/searxng/compose.yml exec -T searxng-mcp node -e '
+            Promise.all(["http://127.0.0.1:8000/health", "http://searxng:8080/healthz"].map(async url => {
+              const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+              if (!response.ok) throw new Error(url + " returned HTTP " + response.status);
+            })).catch(error => { console.error(error.message); process.exitCode = 1 })'
+      - name: Tear down the search services
+        if: always()
+        run: SEARXNG_SECRET=cleanup-only podman compose -f claims/deploy/searxng/compose.yml down --volumes
+      - name: Tear down the disposable stack
+        if: always()
+        run: |
+          if test -f claims/deploy/.env; then
+            podman rm -f --ignore chat-model-fixture
+            podman compose --env-file claims/deploy/.env -f compose.claims.yml -f .artifacts/claims-baseline/shared-chat.compose.json --profile story --profile observe down --volumes
+          fi

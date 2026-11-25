@@ -1,0 +1,24 @@
+{
+  "toolCalls": ["list_evidence", "read_evidence", "read_evidence", "claim_timeline"],
+  "sources": [
+    {
+      "claimId": "WC-103",
+      "claimVersion": 1,
+      "documentId": "WC-103-report",
+      "documentVersion": 1,
+      "anchorId": "account",
+      "title": "Supervisor incident report",
+      "quote": "The signed supervisor statement records November 9 as the incident date."
+    },
+    {
+      "claimId": "WC-103",
+      "claimVersion": 1,
+      "documentId": "WC-103-shift",
+      "documentVersion": 1,
+      "anchorId": "date",
+      "title": "Shift handover note",
+      "quote": "The relief supervisor recorded November 10 in the shift handover. The supervisor incident report gives a different date."
+    }
+  ],
+  "recordedAt": ["2026-11-09T19:15:00.000Z", "2026-11-17T14:00:00.000Z"]
+}

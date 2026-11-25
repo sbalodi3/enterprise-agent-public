@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'">
+<title>Case list</title>
+<style>/* bundled widget styles */</style>
+</head>
+<body>
+<header class="section-head case-heading"><h2 id="title">Matching cases</h2><span id="count" aria-live="polite"></span></header>
+<ul id="rows"></ul>
+<script type="module">
+  /* bundled widget code */
+  const titles = { open: 'My open cases', due: 'My cases due today', waiting: 'My waiting cases' }
+  const dueDate = new Intl.DateTimeFormat('en-US', {
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'UTC', timeZoneName: 'short',
+  })
+  startWidget(({ view, filters, items, total }, open) => {
+    const personal = filters?.assignedOnly && !filters.query && !filters.offset && !(filters.waitingOnly && filters.dueToday)
+    const queue = view || (personal && (filters.waitingOnly ? 'waiting' : filters.dueToday ? 'due' : 'open'))
+    document.querySelector('#title').textContent = titles[queue] || 'Matching cases'
+    document.querySelector('#count').textContent = total > items.length ? 'Showing ' + items.length + ' of ' + total + ' cases'
+      : total ? total + (total === 1 ? ' case' : ' cases') : 'No cases match this view.'
+    const list = document.querySelector('#rows')
+    list.replaceChildren()
+    for (const item of items) {
+      const { headline, context } = casePresentation(item, !titles[queue])
+      const row = node('li', 'case-row')
+      const button = claimButton(item, open)
+      const copy = node('span', 'case-copy')
+      copy.append(node('strong', '', headline), node('span', 'subtle', context))
+      if (item.dueAt) {
+        const time = node('time', 'due', 'Due ' + dueDate.format(new Date(item.dueAt)))
+        time.dateTime = item.dueAt
+        copy.append(time)
+      }
+      // Announce the same action, claim identity and deadline that the row displays.
+      button.setAttribute('aria-label', 'Open ' + context + ' in Workbench. ' + headline + (item.dueAt ? '. ' + copy.lastChild.textContent : ''))
+      button.append(copy, node('span', 'case-open', 'Open ›'))
+      row.append(button)
+      list.append(row)
+    }
+  })
+</script>
+</body>
+</html>

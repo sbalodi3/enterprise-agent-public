@@ -1,0 +1,260 @@
+name: claims-demo
+
+x-app: &app
+  image: claims-workbench:local
+  pull_policy: never
+  build:
+    context: .
+    dockerfile: claims/deploy/Dockerfile
+    args:
+      DSH_CLIENT_COMMIT_HASH: ${CLAIMS_SOURCE_COMMIT:-0000000}
+  init: false
+  restart: unless-stopped
+  stop_grace_period: 30s
+  networks: [claims]
+
+x-hosted-chat: &hosted-chat
+  image: claims-workbench:local
+  pull_policy: never
+  command: [--desktop-chat]
+  restart: unless-stopped
+  stop_grace_period: 30s
+  networks: [chat]
+  depends_on:
+    chat-authority: {condition: service_started}
+  healthcheck:
+    test: [CMD, node, claims/deploy/chat-healthcheck.mjs]
+    interval: 5s
+    timeout: 4s
+    start_period: 45s
+    retries: 30
+
+x-chat-environment: &chat-environment
+  CLAIMS_MANAGED_CHAT: '1'
+  CLAIMS_CHAT_INTERNAL_ORIGIN: http://chat-authority:3080
+  CLAIMS_MODEL_URL: ${CLAIMS_MODEL_URL:-http://llama:8080/v1}
+  CLAIMS_MODEL_ID: ${CLAIMS_MODEL_ID:-claims-local}
+  DSH_HOME: /data/harness
+  HOME: /data/harness
+  DSH_TELEMETRY_DISABLED: '1'
+
+services:
+  postgres:
+    image: docker.io/library/postgres:17.12-bookworm@sha256:40865bc877a289da75963d97d72b59633f639fc5af7a4e856bfa3714cae5b536
+    restart: unless-stopped
+    entrypoint: [bash, -ec]
+    command: ['install -m 0644 /claims-init.sh /docker-entrypoint-initdb.d/10-claims.sh; exec docker-entrypoint.sh postgres']
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ${CLAIMS_POSTGRES_PASSWORD:?Run node claims/deploy/init-env.mjs and pass --env-file claims/deploy/.env}
+      CLAIMS_DB_PASSWORD: ${CLAIMS_DB_PASSWORD:?Missing claims database password}
+    volumes:
+      - claims-postgres:/var/lib/postgresql/data
+      - ./claims/deploy/init-postgres.sh:/claims-init.sh:ro,z
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U postgres -d postgres']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    networks: [claims]
+
+  entra:
+    image: claims-entra-local:0.1.1
+    pull_policy: never
+    platform: linux/amd64
+    build:
+      context: ./claims/auth
+      dockerfile: entra/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: '8080'
+      TLS_ENABLED: 'false'
+      REQUIRE_PASSWORD: 'false'
+      SEED_ON_START: 'false'
+      LOG_LEVEL: warn
+      TOKEN_LIFETIME_ID_SECONDS: ${CLAIMS_AUTH_ID_TOKEN_SECONDS:-3600}
+      PUBLIC_ORIGIN: http://localhost:8080
+      CLAIMS_APP_ORIGIN: ${CLAIMS_APP_ORIGIN:-http://localhost:3080}
+      CLAIMS_OIDC_CLIENT_SECRET: ${CLAIMS_OIDC_CLIENT_SECRET:?Missing OIDC client secret}
+    volumes: [claims-entra:/app/data]
+    ports: ['127.0.0.1:8080:8080']
+    networks: [claims]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:8080/health').then(async r => process.exit(r.ok && (await r.json()).status === 'ok' ? 0 : 1))"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+
+  workbench:
+    <<: *app
+    environment:
+      CLAIMS_MS_MODE: ${CLAIMS_MS_MODE:-}
+      CLAIMS_MS_TENANT_ID: ${CLAIMS_MS_TENANT_ID:-}
+      CLAIMS_MS_CLIENT_ID: ${CLAIMS_MS_CLIENT_ID:-}
+      CLAIMS_MS_CLIENT_SECRET: ${CLAIMS_MS_CLIENT_SECRET:-}
+      CLAIMS_MS_TOKEN_KEY: ${CLAIMS_MS_TOKEN_KEY:-}
+      CLAIMS_MS_ACCOUNT_MAP: ${CLAIMS_MS_ACCOUNT_MAP:-}
+      CLAIMS_MS_AUTHORITY_ORIGIN: ${CLAIMS_MS_AUTHORITY_ORIGIN:-}
+      CLAIMS_MS_INTERNAL_ORIGIN: ${CLAIMS_MS_INTERNAL_ORIGIN:-}
+      CLAIMS_MS_GRAPH_ORIGIN: ${CLAIMS_MS_GRAPH_ORIGIN:-}
+      DSH_PROFILE: claims-workbench
+      CLAIMS_CONTAINER: '1'
+      DSH_HOME: /data/harness
+      DSH_TELEMETRY_DISABLED: '1'
+      CLAIMS_APP_ORIGIN: ${CLAIMS_APP_ORIGIN:-http://localhost:3080}
+      CLAIMS_PORT: '3080'
+      DATABASE_URL: postgresql://claims:${CLAIMS_DB_PASSWORD}@postgres:5432/claims
+      CLAIMS_OIDC_ISSUER: ${CLAIMS_OIDC_ISSUER:-http://localhost:8080/db5ec091-9b12-4b56-8c34-010000000001/v2.0}
+      CLAIMS_OIDC_INTERNAL_ORIGIN: http://entra:8080
+      CLAIMS_AUTH_SESSION_SECONDS: ${CLAIMS_AUTH_SESSION_SECONDS:-1800}
+      CLAIMS_OIDC_CLIENT_SECRET: ${CLAIMS_OIDC_CLIENT_SECRET}
+      CLAIMS_SESSION_SECRET: ${CLAIMS_SESSION_SECRET:?Missing session secret}
+      CLAIMS_WORKER_TOKEN: ${CLAIMS_WORKER_TOKEN:?Missing worker token}
+      WORKER_API_TOKEN: ${CLAIMS_WORKER_TOKEN}
+      CLAIMS_WIDGET_ORIGIN: ${CLAIMS_WIDGET_ORIGIN:-http://claims-widgets.localhost:4380}
+      CLAIMS_WIDGETS_DISABLED: ${CLAIMS_WIDGETS_DISABLED:-0}
+      CLAIMS_WIDGET_BIND: 0.0.0.0
+      CLAIMS_WIDGET_PARENT_ORIGINS: ${CLAIMS_WIDGET_PARENT_ORIGINS:-}
+      CLAIMS_WAGE_REVIEW: ${CLAIMS_WAGE_REVIEW:-0}
+      CLAIMS_FIXTURE_TOKEN: ${CLAIMS_FIXTURE_TOKEN:?Run node claims/deploy/init-env.mjs to add the missing fixture ingress token}
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: default
+      TEMPORAL_TASK_QUEUE: claims-work
+      CLAIMS_TEMPORAL_ENABLED: ${CLAIMS_TEMPORAL_ENABLED:-false}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${CLAIMS_OTLP_ENDPOINT:-}
+      OTEL_SERVICE_NAME: claims-workbench
+      CLAIMS_MODEL_URL: ${CLAIMS_MODEL_URL:-http://llama:8080/v1}
+      CLAIMS_MODEL_ID: ${CLAIMS_MODEL_ID:-claims-local}
+    volumes: [claims-harness:/data]
+    ports: ['127.0.0.1:3080:3080', '127.0.0.1:4380:3098']
+    depends_on:
+      postgres: {condition: service_healthy}
+      entra: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, claims/deploy/healthcheck.mjs]
+      interval: 5s
+      timeout: 5s
+      start_period: 60s
+      retries: 40
+
+  chat-maya:
+    profiles: [legacy-employee-chat]
+    <<: *hosted-chat
+    environment:
+      <<: *chat-environment
+      CLAIMS_DESKTOP_USER: maya
+      CLAIMS_DESKTOP_PORT: '3083'
+    volumes: [claims-chat-maya:/data]
+    ports: ['127.0.0.1:3083:3083']
+
+  chat-authority:
+    profiles: [legacy-employee-chat]
+    image: claims-workbench:local
+    pull_policy: never
+    entrypoint: [node, claims/desktop-chat/authority.mjs]
+    restart: unless-stopped
+    networks: [claims, chat]
+    environment:
+      CLAIMS_APP_ORIGIN: ${CLAIMS_APP_ORIGIN:-http://localhost:3080}
+      CLAIMS_CHAT_UPSTREAM: http://workbench:3080
+    depends_on:
+      workbench: {condition: service_healthy}
+
+  chat-alex:
+    profiles: [legacy-employee-chat]
+    <<: *hosted-chat
+    environment:
+      <<: *chat-environment
+      CLAIMS_DESKTOP_USER: alex
+      CLAIMS_DESKTOP_PORT: '3084'
+    volumes: [claims-chat-alex:/data]
+    ports: ['127.0.0.1:3084:3084']
+
+  chat-supervisor:
+    profiles: [legacy-employee-chat]
+    <<: *hosted-chat
+    environment:
+      <<: *chat-environment
+      CLAIMS_DESKTOP_USER: supervisor
+      CLAIMS_DESKTOP_PORT: '3085'
+    volumes: [claims-chat-supervisor:/data]
+    ports: ['127.0.0.1:3085:3085']
+
+  temporal:
+    profiles: [story]
+    image: docker.io/temporalio/temporal:1.10.1@sha256:b228dadf9cdb6c7c02a1394b89dd76f827aac9760e458fce42f0899a10141225
+    restart: unless-stopped
+    command: [server, start-dev, --ip, 0.0.0.0, --db-filename, /home/temporal/temporal.db, --ui-port, '8233']
+    volumes: [claims-temporal:/home/temporal]
+    ports: ['127.0.0.1:7233:7233', '127.0.0.1:8233:8233']
+    healthcheck:
+      test: [CMD, temporal, operator, cluster, health, --address, '127.0.0.1:7233']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    networks: [claims]
+
+  worker:
+    <<: *app
+    profiles: [story]
+    environment:
+      DSH_PROFILE: claims-worker
+      CLAIMS_CONTAINER: '1'
+      DSH_HOME: /data/harness
+      DSH_TELEMETRY_DISABLED: '1'
+      WORK_API_URL: http://workbench:3080
+      CLAIMS_WORKER_TOKEN: ${CLAIMS_WORKER_TOKEN}
+      WORKER_API_TOKEN: ${CLAIMS_WORKER_TOKEN}
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: default
+      TEMPORAL_TASK_QUEUE: claims-work
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${CLAIMS_OTLP_ENDPOINT:-}
+      OTEL_SERVICE_NAME: claims-worker
+    volumes: [claims-worker-home:/data]
+    depends_on:
+      temporal: {condition: service_healthy}
+      workbench: {condition: service_healthy}
+
+  jaeger:
+    profiles: [observe]
+    image: docker.io/jaegertracing/jaeger:2.23.0@sha256:3823829974ccfc2485d2e48b165579091f32295022ae80ca49704e2f4834116e
+    restart: unless-stopped
+    ports: ['127.0.0.1:16686:16686']
+    networks: [claims]
+
+  collector:
+    profiles: [observe]
+    image: docker.io/otel/opentelemetry-collector-contrib:0.165.0@sha256:e40d61f10c9a617cca1ffd1be4d7e2b3a4b0f0001798ff07e58cabe82e618cea
+    restart: unless-stopped
+    command: [--config=/etc/otelcol/claims.yml]
+    volumes:
+      - ./claims/deploy/otel-collector.yml:/etc/otelcol/claims.yml:ro,z
+    ports: ['127.0.0.1:4318:4318']
+    depends_on:
+      jaeger: {condition: service_started}
+    networks: [claims]
+
+  llama:
+    ports: ['127.0.0.1:3082:8080']
+    profiles: [model]
+    image: ghcr.io/ggml-org/llama.cpp:server@sha256:5b43086e3ba7ea5794d72904654f6cd41224a9b1c6ac0398f4940ee380d30f23
+    restart: unless-stopped
+    command: [--model, '/models/${CLAIMS_MODEL_FILE:-Qwen3-4B-Q4_K_M.gguf}', --host, 0.0.0.0, --port, '8080', --ctx-size, '8192', --alias, claims-local, --jinja, --reasoning, 'off']
+    volumes:
+      - ${CLAIMS_MODELS_DIR:-./claims/deploy/models}:/models:ro,z
+    networks: [claims, chat]
+
+networks:
+  claims:
+  chat:
+
+volumes:
+  claims-entra:
+  claims-postgres:
+  claims-harness:
+  claims-worker-home:
+  claims-temporal:
+  claims-chat-maya:
+  claims-chat-alex:
+  claims-chat-supervisor:

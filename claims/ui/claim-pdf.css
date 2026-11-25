@@ -1,0 +1,16 @@
+.claims-pdf-dialog { color-scheme: light dark; width: min(56rem, 94vw); height: min(52rem, 90vh); box-sizing: border-box; padding: .65rem; border: 1px solid #828b87; border-radius: .7rem; background: Canvas; color: CanvasText; }
+.claims-pdf-dialog[open] { display: flex; flex-direction: column; gap: .5rem; }
+.claims-pdf-dialog::backdrop { background: rgb(0 0 0 / 60%); }
+.claims-pdf-dialog > button { align-self: flex-end; padding: .4rem .8rem; cursor: pointer; }
+.claims-pdf-dialog iframe { flex: 1; min-height: 0; width: 100%; border: none; }
+html:has(.claims-pdf) { color-scheme: light dark; font: 15px system-ui, sans-serif; background: Canvas; color: CanvasText; }
+body:has(.claims-pdf) { margin: 0; }
+.claims-pdf { max-width: 60rem; margin: 0 auto; padding: 0 1rem 1rem; }
+.claims-pdf header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem; position: sticky; top: 0; z-index: 1; padding: .65rem 0; background: Canvas; border-bottom: 1px solid GrayText; }
+.claims-pdf h1 { margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
+.claims-pdf nav { display: flex; align-items: center; gap: .75rem; }
+.claims-pdf nav button { cursor: pointer; padding: .4rem .6rem; }
+.claims-pdf #status { font-size: .86rem; }
+.claims-pdf figure { position: relative; margin: .5rem 0; line-height: 0; }
+.claims-pdf canvas { display: block; width: 100%; height: auto; border: 1px solid #aaa; box-sizing: border-box; }
+.pdf-screen-reader { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }

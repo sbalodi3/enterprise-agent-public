@@ -1,0 +1,29 @@
+.ac-page {
+  height: 100%;
+  box-sizing: border-box;
+  overflow: auto;
+  padding: 28px clamp(20px, 4vw, 48px) 48px;
+  color: var(--dsw-alias-label-primary);
+}
+.ac-content { width: 100%; max-width: 960px; margin-inline: auto; }
+.ac-header { margin-block-end: 32px; }
+.ac-header h1 { margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; }
+.ac-header h1:focus:not(:focus-visible) { outline: none; }
+.ac-header p, .ac-card-head p, .ac-detail {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--dsw-alias-label-secondary);
+}
+.ac-card { padding: 8px; margin-inline: -8px; border-radius: var(--dsw-radius-xl); }
+.ac-card-head, .ac-card-controls { display: flex; align-items: center; gap: 14px; }
+.ac-art {
+  display: grid; place-items: center; flex: none; width: 48px; height: 48px;
+  border: .5px solid var(--dsw-alias-border-l3); border-radius: var(--dsw-radius-lg);
+}
+.ac-card-head h2 { margin: 0; font-size: 14px; line-height: 20px; font-weight: 550; }
+.ac-card-controls, .ac-detail { margin-inline-start: 62px; }
+.ac-card-controls { margin-block-start: 12px; gap: 9px; }
+.ac-control-label, .ac-status, .ac-message, .ac-error { font-size: 13px; line-height: 20px; }
+.ac-detail { overflow-wrap: anywhere; }
+.ac-error { margin-block-start: 12px; color: var(--dsw-alias-label-primary); }

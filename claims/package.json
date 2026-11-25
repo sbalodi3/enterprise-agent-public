@@ -1,0 +1,40 @@
+{
+  "name": "@local/claims-workbench",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./runtime/plugin.mjs",
+    "./client": "./ui/plugin.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-layout"
+      ]
+    }
+  },
+  "dependencies": {
+    "@a2ui/lit": "0.16.0",
+    "@a2ui/web_core": "0.16.1",
+    "@deepseek-ai/dsh-error": "file:../packages/util/error",
+    "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.57.2",
+    "@opentelemetry/resources": "1.30.1",
+    "@opentelemetry/sdk-trace-base": "1.30.1",
+    "jose": "6.2.3",
+    "lit": "3.3.3",
+    "pg": "8.16.3",
+    "zod": "3.25.76"
+  },
+  "scripts": {
+    "build:review": "esbuild ui/wage-review.mjs --bundle --format=esm --minify --legal-comments=inline --outfile=build/wage-review.bundle.mjs",
+    "test": "node --test tests/*.test.mjs auth/*.test.mjs integrations/*.test.mjs domain/tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
+  }
+}

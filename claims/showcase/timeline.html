@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'">
+<title>Claim timeline</title>
+<style>/* bundled widget styles */</style>
+</head>
+<body>
+<header class="timeline-header"><span id="claim" class="subtle"></span><h2>Claim timeline</h2></header>
+<main id="events"></main>
+<script type="module">
+  /* bundled widget code */
+  const month = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+  const day = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+  const clock = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'UTC', timeZoneName: 'short' })
+  startWidget(({ itemId, events, sources }, open) => {
+    document.querySelector('#claim').textContent = itemId
+    const timeline = document.querySelector('#events')
+    timeline.replaceChildren()
+    const rows = [...events, ...sources].sort((a, b) => Date.parse(a.at) - Date.parse(b.at))
+    if (!rows.length) timeline.append(node('p', 'empty', 'There are no recorded timeline events.'))
+    let lastMonth, list
+    for (const row of rows) {
+      const at = new Date(row.at)
+      const heading = month.format(at)
+      if (heading !== lastMonth) {
+        const section = node('section', 'month')
+        list = node('ol')
+        section.append(node('h3', '', heading), list)
+        timeline.append(section)
+        lastMonth = heading
+      }
+      const event = node('li', row.id ? 'event document' : 'event')
+      const calendarDate = row.dateOnly || row.at.length === 10
+      const time = node('time', '', calendarDate ? day.format(at) : day.format(at) + ' · ' + clock.format(at))
+      time.dateTime = row.at
+      event.append(node('strong', 'event-title', row.title), time)
+      const documentId = row.id || row.document
+      if (documentId && row.anchorId) {
+        const action = row.id ? 'Open document' : 'View source'
+        const button = node('button', 'source-action', action)
+        button.type = 'button'
+        button.setAttribute('aria-label', action + ' · ' + row.title)
+        button.onclick = () => open('urn:enterprise-agent:source:' + encodeURIComponent(documentId) + '#' + encodeURIComponent(row.anchorId))
+        event.append(button)
+      }
+      list.append(event)
+    }
+  })
+</script>
+</body>
+</html>

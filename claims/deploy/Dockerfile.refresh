@@ -1,0 +1,26 @@
+# Local disk-constrained development only: the base must be the verified Linux
+# artifact image for the current harness source. Fresh installations use Dockerfile.
+ARG CLAIMS_VERIFIED_BASE=claims-workbench:verified-harness
+FROM ${CLAIMS_VERIFIED_BASE}
+COPY --chown=node:node packages/client/ui-sidebar/src packages/client/ui-sidebar/src
+COPY --chown=node:node packages/client/ui-layout/src packages/client/ui-layout/src
+COPY --chown=node:node packages/client/ui-settings-models/src packages/client/ui-settings-models/src
+COPY --chown=node:node packages/client/ui-conversation/src packages/client/ui-conversation/src
+COPY --chown=node:node packages/client/ui-workspace/src packages/client/ui-workspace/src
+RUN node node_modules/typescript/bin/tsc -b packages/client/ui-sidebar packages/client/ui-workspace packages/client/ui-layout packages/client/ui-conversation packages/client/ui-settings-models && \
+    (cd packages/client/ui-sidebar && ../../../node_modules/.bin/tsdown --config-loader native --env.DSH_BUILD_FACE client) && \
+    (cd packages/client/ui-conversation && ../../../node_modules/.bin/tsdown --config-loader native --env.DSH_BUILD_FACE client) && \
+    (cd packages/client/ui-workspace && ../../../node_modules/.bin/tsdown --config-loader native --env.DSH_BUILD_FACE client) && \
+    (cd packages/client/ui-layout && ../../../node_modules/.bin/tsdown --config-loader native --env.DSH_BUILD_FACE client) && \
+    (cd packages/client/ui-settings-models && ../../../node_modules/.bin/tsdown --config-loader native --env.DSH_BUILD_FACE client)
+COPY --chown=node:node packages/api/gateway/src packages/api/gateway/src
+COPY --chown=node:node packages/api/session-controller/src packages/api/session-controller/src
+COPY --chown=node:node packages/api/settings-controller/src packages/api/settings-controller/src
+COPY --chown=node:node packages/api/terminal-controller/src packages/api/terminal-controller/src
+COPY --chown=node:node packages/client/file-upload/src packages/client/file-upload/src
+RUN node node_modules/typescript/bin/tsc -b packages/api/gateway packages/api/session-controller packages/api/settings-controller packages/api/terminal-controller packages/client/file-upload && \
+    for pkg in api/gateway api/session-controller api/settings-controller api/terminal-controller client/file-upload; do \
+      (cd packages/$pkg && ../../../node_modules/.bin/tsdown --no-config lib/types/index.js --out-dir lib --no-dts --no-clean --no-fixed-extension --target es2024) || exit 1; \
+    done
+COPY --chown=node:node claims /app/deepseek-harness/claims
+RUN npm --prefix claims ci --workspaces=false --include=dev --ignore-scripts --no-audit --no-fund && npm --prefix claims/worker ci --workspaces=false --ignore-scripts --no-audit --no-fund && npm --prefix claims run build:review

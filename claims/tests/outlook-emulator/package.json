@@ -1,0 +1,7 @@
+{
+  "name": "claims-outlook-emulator-tests",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test integration.test.mjs" },
+  "devDependencies": { "@inbox-zero/emulate": "0.14.1" }
+}

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'">
+<title>Portfolio summary</title>
+<style>/* bundled widget styles */</style>
+</head>
+<body>
+<main aria-label="Portfolio summary">
+  <dl id="metrics" class="metrics" aria-label="Portfolio totals" aria-live="polite"></dl>
+  <header class="section-head groups-heading"><h2 id="title">Portfolio breakdown</h2><span>Claims</span></header>
+  <div id="groups"></div>
+</main>
+<script type="module">
+  /* bundled widget code */
+  const headings = { lob: 'Line of business', status: 'Source status', adjuster: 'Adjuster' }
+  startWidget((data, open) => {
+    document.querySelector('#title').textContent = headings[data.groupBy] || 'Portfolio breakdown'
+    const metrics = document.querySelector('#metrics')
+    metrics.replaceChildren()
+    for (const [label, value] of [['Claims', data.total], ...summaryMetrics(data.totalBillings, data.litigatedCount)]) {
+      const metric = node('div')
+      metric.append(node('dt', '', label), node('dd', '', value))
+      metrics.append(metric)
+    }
+    const list = document.querySelector('#groups')
+    list.replaceChildren()
+    if (!data.groups.length) list.append(node('p', 'empty', 'No claims match this view.'))
+    for (const group of data.groups) {
+      const details = node('details', 'group'), summary = node('summary')
+      const label = groupName(group, data.groupBy)
+      summary.setAttribute('aria-label', label + ' · ' + group.count + (group.count === 1 ? ' claim' : ' claims'))
+      const track = node('span', 'track'), fill = node('span', 'fill')
+      track.setAttribute('aria-hidden', 'true')
+      fill.style.width = (data.total ? 100 * group.count / data.total : 0) + '%'
+      track.append(fill)
+      summary.append(node('span', '', label), track, node('strong', 'count', group.count))
+      const body = node('div', 'group-body')
+      const figures = summaryMetrics(group.billingsAmount, group.litigatedCount)
+      if (figures.length) body.append(node('p', 'subtle', figures.map(([key, value]) => key + ' ' + value).join(' · ')))
+      const cases = node('ul', 'group-items')
+      for (const item of group.items) {
+        const row = node('li')
+        row.append(claimButton(item, open, [item.id, claimTitle(item)].filter(Boolean).join(' · ')))
+        cases.append(row)
+      }
+      body.append(cases)
+      details.append(summary, body)
+      list.append(details)
+    }
+  })
+</script>
+</body>
+</html>

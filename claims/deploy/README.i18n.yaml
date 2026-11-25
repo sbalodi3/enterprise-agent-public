@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write claims/deploy/README.md
+/local-claims-demo-deployment:
+  en: c9f5e71c025f57f8
+  zh: 2d29d163f94d2632
+/local-claims-demo-deployment/single-podman-application:
+  en: 08c604a618d8d61e
+  zh: 4d4b1e0a85ac92cf
+/local-claims-demo-deployment/optional-web-search-for-standard-chat:
+  en: 52829ba66ceccc6f
+  zh: 8935d10057b7eac6
+/local-claims-demo-deployment/workflow-ownership-and-recovery:
+  en: 513c1e8dc9538f23
+  zh: f52c61d21455c53b
+/local-claims-demo-deployment/shared-chat:
+  en: d6a66d0af1a1dcf8
+  zh: e12e09dd6838631b

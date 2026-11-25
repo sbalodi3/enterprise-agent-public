@@ -1,0 +1,51 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 128
+    spike_limit_mib: 32
+  filter/claims_allowlist:
+    error_mode: propagate
+    trace_conditions:
+      - 'resource.attributes["service.name"] != "claims-workbench"'
+      - 'not IsMatch(span.name, "^claims[.](routing[.](decision|undo)|portfolio|mailbox|items|evidence|assist|proposals|decisions|fixtures|wages|operations|evaluate|dataset|status|unmatched|simulator[.]dispatch|assistant[.]check-scope|tool[.](timeline|compare_evidence|explain_priority|prepare_handoff)|worker[.](startWage|acceptWage|wageStatus|timeoutWage|ackWageDelivery|dispatchOperation|reconcileOperation))$")'
+      - 'IsMatch(spanevent.name, ".*")'
+  transform/claims_minimize:
+    error_mode: propagate
+    trace_statements:
+      - 'keep_keys(resource.attributes, ["service.name"])'
+      - 'keep_keys(instrumentation_scope.attributes, [])'
+      - 'set(instrumentation_scope.name, "claims-workbench")'
+      - 'set(instrumentation_scope.version, "1.0.0")'
+      - 'keep_keys(span.attributes, []) where span.name != "claims.routing.decision"'
+      - 'keep_keys(span.attributes, ["routing.intent", "routing.model", "routing.confidence", "routing.action", "routing.additions"]) where span.name == "claims.routing.decision"'
+      - 'delete_key(span.attributes, "routing.intent") where not IsString(span.attributes["routing.intent"]) or not IsMatch(span.attributes["routing.intent"], "^(workspace|claim|document|portfolio|clarify|unavailable)$")'
+      - 'delete_key(span.attributes, "routing.model") where not IsString(span.attributes["routing.model"]) or not IsMatch(span.attributes["routing.model"], "^(offline|scope-minilm-[0-9a-f]{12})$")'
+      - 'delete_key(span.attributes, "routing.confidence") where not IsString(span.attributes["routing.confidence"]) or not IsMatch(span.attributes["routing.confidence"], "^(high|low|unavailable)$")'
+      - 'delete_key(span.attributes, "routing.action") where not IsString(span.attributes["routing.action"]) or not IsMatch(span.attributes["routing.action"], "^(claims|workspace|clarify)$")'
+      - 'delete_key(span.attributes, "routing.additions") where not IsInt(span.attributes["routing.additions"])'
+      - 'delete_key(span.attributes, "routing.additions") where IsInt(span.attributes["routing.additions"]) and (span.attributes["routing.additions"] < 0 or span.attributes["routing.additions"] > 1536)'
+      - 'set(span.status.message, "")'
+      - 'set(span.trace_state, "")'
+  batch:
+    timeout: 1s
+    send_batch_size: 128
+
+exporters:
+  otlp_http/jaeger:
+    endpoint: http://jaeger:4318
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, filter/claims_allowlist, transform/claims_minimize, batch]
+      exporters: [otlp_http/jaeger]
+  telemetry:
+    logs:
+      level: warn

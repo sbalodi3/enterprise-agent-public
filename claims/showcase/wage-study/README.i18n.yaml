@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write claims/showcase/wage-study/README.md
+/wage-evidence-pilot:
+  en: 763fb4c01ac5c9b8
+  zh: bc222211a02ad1cd
+/wage-evidence-pilot/preparation:
+  en: 0bff026a2a443a7a
+  zh: 6dd50acff9b0281d
+/wage-evidence-pilot/session-schedule-and-answer-key:
+  en: 3523a2ce4a9c4c2c
+  zh: b419ef6434d343fd
+/wage-evidence-pilot/scorecard:
+  en: 80fe51845dc0d64e
+  zh: 775a1df4191c81f8

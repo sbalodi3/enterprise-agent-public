@@ -1,0 +1,5 @@
+*
+!entra
+!entra/Dockerfile
+!entra/start.mjs
+!roster.mjs

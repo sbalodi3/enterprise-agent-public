@@ -1,0 +1,27 @@
+name: enterprise-agent-search
+services:
+  searxng:
+    image: ghcr.io/searxng/searxng:2026.11.21-c6ee3e9fd@sha256:fc1d81d7e9d04d3c8b3e23c7162feddf5c3d6aecd32e67a56eaabcb8d8747f79
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?Generate a local SearXNG secret}
+    volumes:
+      - ./settings.yml:/etc/searxng/settings.yml:ro,z
+      - search-cache:/var/cache/searxng
+    networks: [tools, egress]
+    ports: ['127.0.0.1:3487:8080']
+  searxng-mcp:
+    image: docker.io/isokoliuk/mcp-searxng:2.8.1@sha256:52249d0cb8ae68dbeff7b5f675ded5fbcdf54321a43a62a0df0b4862269962e6
+    environment:
+      SEARXNG_URL: http://searxng:8080
+      SEARXNG_MAX_RESULTS: '5'
+      MCP_HTTP_HOST: 0.0.0.0
+      MCP_HTTP_PORT: '8000'
+    networks: [tools]
+    depends_on: [searxng]
+networks:
+  tools:
+    name: enterprise-agent-search-tools
+    internal: true
+  egress:
+volumes:
+  search-cache:
