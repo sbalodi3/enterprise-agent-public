@@ -15,9 +15,10 @@ services:
       CLAIMS_CMS_TEST_SNAPSHOT: /run/cms/snapshot.json
     volumes:
       - outlook-configuration:/data/config
+      - ./claims/deploy/outlook-healthcheck.mjs:/srv/claims/deploy/outlook-healthcheck.mjs:ro,z
       - ${OUTLOOK_CMS_DIR:-./.artifacts/enterprise-agent/cms-mcp}:/run/cms:ro,z
     healthcheck:
-      test: [CMD, node, -e, "fetch('http://127.0.0.1:8381/').then(() => require('fs').accessSync('/data/config/provider.json')).catch(()=>process.exit(1))"]
+      test: [CMD, node, /srv/claims/deploy/outlook-healthcheck.mjs]
       interval: 3s
       timeout: 3s
       retries: 20

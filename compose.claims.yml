@@ -77,11 +77,13 @@ services:
       PUBLIC_ORIGIN: http://localhost:8080
       CLAIMS_APP_ORIGIN: ${CLAIMS_APP_ORIGIN:-http://localhost:3080}
       CLAIMS_OIDC_CLIENT_SECRET: ${CLAIMS_OIDC_CLIENT_SECRET:?Missing OIDC client secret}
-    volumes: [claims-entra:/app/data]
+    volumes:
+      - claims-entra:/app/data
+      - ./claims/auth/entra/healthcheck.mjs:/app/healthcheck.mjs:ro,z
     ports: ['127.0.0.1:8080:8080']
     networks: [claims]
     healthcheck:
-      test: [CMD, node, -e, "fetch('http://127.0.0.1:8080/health').then(async r => process.exit(r.ok && (await r.json()).status === 'ok' ? 0 : 1))"]
+      test: [CMD, node, /app/healthcheck.mjs]
       interval: 5s
       timeout: 4s
       retries: 20
